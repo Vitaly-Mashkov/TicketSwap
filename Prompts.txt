@@ -1,0 +1,139 @@
+A selection of the prompts I used while building this project with Claude
+(Anthropic). They are in chronological order.
+
+I left out the small debugging messages where I pasted logs or error
+traces. Each entry has a short "Result" line that says what came out of it.
+
+
+1. Analyse the assignment
+-------------------------
+Prompt:
+  Review the repository https://github.com/TicketSwap/mobile-assignment-backend.
+  Read schema.graphql, the three JSON files and the instructions in the README.
+
+Result:
+  A summary of the task, the GraphQL schema and the sample data.
+
+
+2. Find an idea
+---------------
+Prompt:
+  My backend is running locally. Let's build some kind of ticket buyer app?
+
+Result:
+  A "ticket buyer" idea: browse events, pick tickets, pay, get tickets.
+
+
+3. Cut the scope
+----------------
+Prompt:
+  The README says to spend reasonable time, and your proposal looks like
+  too much. Cut it down to a realistic scope.
+
+Result:
+  Scope reduced to four parts: login, events list with search, event details,
+  cart with payment.
+
+
+4. Check the data
+-----------------
+Prompt:
+  We have enough data for the event screen and for the cart with payment.
+  Which queries and mutations will we use for the cart and the payment?
+
+Result:
+  event(id), addTicketToCart, removeTicketFromCart, authenticatedUser,
+  checkout.
+
+
+5. Platform, stack and working method
+-------------------------------------
+Prompt:
+  Android, and Apollo for GraphQL. We will work in slices, one screen at a
+  time. First the project skeleton and a minimal Compose login screen.
+  Let's discuss where to reasonably store access token.
+
+Result:
+  Preferences DataStore behind a small TokenStorage interface.
+  Apollo Kotlin 5 with code generation from the schema.
+
+
+6. Plan and constraints
+-----------------------
+Prompt:
+  Let's go with the barcode as our extra feature. The plan is:
+  1) skeleton, network layer, models, error handling, auth;
+  2) events list with search;
+  3) event screen;
+  4) cart, payment and confirmation (with the barcode).
+  No Hilt: manual DI is enough, and I will present it as a conscious choice.
+  Tests come last.
+
+Result:
+  Plan agreed. Manual DI container, tests postponed to the end.
+
+
+7. Check the API by hand
+------------------------
+Prompt:
+  Before we start, give me GraphQL requests for login, the events list,
+  search, the cart and checkout, so I can verify the backend myself.
+
+Result:
+  I ran them in GraphiQL (login, events, event, search, cart, checkout,
+  logout). Everything worked, so we started coding.
+
+
+8. Skeleton and login
+---------------------
+Prompt:
+  Build the project structure and the login screen. Use modern architecture
+  practices, but do not overdo it.
+
+Result:
+  Single module, MVVM, Apollo client, DataStore token storage, a typed
+  AppResult/AppError layer for all errors, session check on startup.
+
+
+9. Events screen
+----------------
+Prompt:
+  Next, build the events screen with search.
+
+Result:
+  Events list with server-side search (300 ms delay), loading/error/retry
+  states, upcoming events first and past events dimmed.
+
+
+10. Event details
+-----------------
+Prompt:
+  I like this design: a stepper for each ticket type, a shared cart
+  repository, a cart bar at the bottom, and past events disabled. Let's build
+  it.
+
+Result:
+  Event screen that talks to the cart API on every tap, with locked buttons
+  while a request runs and errors shown in a snackbar.
+
+
+11. Cart, payment and barcode
+-----------------------------
+Prompt:
+  Check against our original plan: everything is done except the cart with
+  payment and the barcode, right? Let's build that.
+
+Result:
+  Cart screen, card input, confirmation with EAN-13 barcodes drawn with ZXing,
+  and automatic return to login when the session expires.
+
+
+12. Tests
+---------
+Prompt:
+  I do not think we need to cover every line, only the main cases. Which tests
+  would you recommend adding? Around 9-10 tests is enough.
+
+Result:
+  9 unit tests: cart logic, error mapping, card formatting, payment flow, event
+  screen stock handling.
