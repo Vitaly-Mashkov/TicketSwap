@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The assignment backend is plain HTTP. Cleartext is allowed ONLY for the local dev hosts below. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Android emulator -> host machine -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <!-- Real device: add your computer's LAN IP here -->
+    </domain-config>
+</network-security-config>

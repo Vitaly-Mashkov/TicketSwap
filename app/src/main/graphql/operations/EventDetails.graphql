@@ -1,0 +1,16 @@
+fragment EventDetailsFields on Event {
+  id
+  title
+  description
+  startsAt
+  imageUrl
+  venue { name }
+  tickets { id label priceCents currency quantityAvailable }
+}
+
+query EventDetails($id: ID!) {
+  event(id: $id) {
+    error { text }
+    event { ...EventDetailsFields }
+  }
+}

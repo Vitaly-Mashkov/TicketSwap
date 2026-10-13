@@ -1,0 +1,23 @@
+# Shared by the list and the search so both return the same shape.
+fragment EventSummaryFields on Event {
+  id
+  title
+  startsAt
+  imageUrl
+  venue { name }
+  tickets { priceCents currency quantityAvailable }
+}
+
+query Events {
+  events {
+    error { text }
+    events { ...EventSummaryFields }
+  }
+}
+
+query SearchEvents($query: String!) {
+  searchEvents(query: $query) {
+    error { text }
+    events { ...EventSummaryFields }
+  }
+}

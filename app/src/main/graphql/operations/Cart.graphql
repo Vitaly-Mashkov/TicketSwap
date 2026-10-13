@@ -1,0 +1,30 @@
+fragment CartLineFields on CartLine {
+  ticketId
+  eventId
+  eventTitle
+  ticketLabel
+  priceCents
+  currency
+}
+
+# The cart is read through the current user (authenticatedUser is a mutation in this backend).
+mutation LoadCart($accessToken: String!) {
+  authenticatedUser(accessToken: $accessToken) {
+    error { text }
+    user { cart { ...CartLineFields } }
+  }
+}
+
+mutation AddTicketToCart($accessToken: String!, $ticketId: ID!) {
+  addTicketToCart(accessToken: $accessToken, ticketId: $ticketId) {
+    error { text }
+    cart { lines { ...CartLineFields } }
+  }
+}
+
+mutation RemoveTicketFromCart($accessToken: String!, $ticketId: ID!) {
+  removeTicketFromCart(accessToken: $accessToken, ticketId: $ticketId) {
+    error { text }
+    cart { lines { ...CartLineFields } }
+  }
+}

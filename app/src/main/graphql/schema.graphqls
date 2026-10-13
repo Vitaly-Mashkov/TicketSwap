@@ -1,0 +1,209 @@
+"""
+A scheduled event. All ticket types (including sold out) are under `tickets`.
+"""
+type Event {
+  id: ID!
+  title: String!
+  description: String
+  startsAt: String!
+  venue: Venue!
+  tickets: [Ticket!]!
+  """Absolute URL of a JPEG image representing this event, served by this backend."""
+  imageUrl: String!
+}
+
+"""
+A physical venue where events are held. Referenced by `Event.venue`.
+"""
+type Venue {
+  id: ID!
+  name: String!
+  """Absolute URL of a JPEG image representing this venue, served by this backend."""
+  imageUrl: String!
+}
+
+"""
+A ticket type for an event. `quantityAvailable` is how many can still be bought (in-memory catalog; decreases when a unit is added to a cart).
+"""
+type Ticket {
+  id: ID!
+  label: String!
+  priceCents: Int!
+  currency: String!
+  quantityAvailable: Int!
+}
+
+type Query {
+  """
+  All events in the catalog.
+  `error` is set on transport-level failure (see server mock rate); `events` is empty when that happens.
+  """
+  events: EventsQueryResult!
+  """A single event by id; `event` is null if not found (no error) or on failure with `error` set."""
+  event(id: ID!): EventQueryResult!
+  """
+  Events whose `title` contains the given text (case-insensitive).
+  Whitespace around `query` is ignored; an empty or whitespace-only `query` returns no events.
+  """
+  searchEvents(query: String!): SearchEventsQueryResult!
+  """
+  Tickets currently available for purchase (quantity available greater than zero), with parent event id included.
+  When `query` is omitted, null, or blank (after trim), all such tickets are returned.
+  Otherwise only events whose `title` contains the text (case-insensitive) are included.
+  """
+  ticketsForPurchase(query: String): TicketsForPurchaseQueryResult!
+}
+
+type EventsQueryResult {
+  events: [Event!]!
+  error: Error
+}
+
+type EventQueryResult {
+  event: Event
+  error: Error
+}
+
+type SearchEventsQueryResult {
+  events: [Event!]!
+  error: Error
+}
+
+type TicketsForPurchaseQueryResult {
+  tickets: [TicketWithEvent!]!
+  error: Error
+}
+
+type TicketWithEvent {
+  eventId: ID!
+  eventTitle: String!
+  ticket: Ticket!
+}
+
+type User {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  age: Int!
+  username: String!
+  """
+  Shopping cart line items (each entry is one ticket unit). In-memory on the server.
+  """
+  cart: [CartLine!]!
+  """Number of tickets in this user's wallet after checkout."""
+  walletTicketCount: Int!
+  """Tickets purchased by this user after a successful `checkout` (in-memory on the server)."""
+  ticketWallet: [OwnedTicket!]!
+  """
+  Credit card number saved via `saveCreditCard` so the user can skip re-entering it
+  at checkout. Null if none has been saved. In-memory on the server.
+  """
+  creditCardNumber: String
+}
+
+"""
+A ticket in the user wallet after checkout: identity, price, and a scannable
+EAN-13–style `barcode`. Does not include catalog `quantityAvailable`.
+"""
+type OwnedTicket {
+  id: ID!
+  label: String!
+  priceCents: Int!
+  currency: String!
+  """13-digit numeric string (EAN-13 with valid check digit)."""
+  barcode: String!
+}
+
+type CartLine {
+  ticketId: ID!
+  eventId: ID!
+  eventTitle: String!
+  ticketLabel: String!
+  priceCents: Int!
+  currency: String!
+}
+
+type Cart {
+  lines: [CartLine!]!
+}
+
+type LoginPayload {
+  accessToken: String
+  error: Error
+}
+
+type LogoutPayload {
+  ok: Boolean!
+  error: Error
+}
+
+type AuthenticatedUserPayload {
+  user: User
+  error: Error
+}
+
+type AddToCartPayload {
+  error: Error
+  """Current cart for the user after a successful add; `error` is set on failure."""
+  cart: Cart
+}
+
+type RemoveFromCartPayload {
+  error: Error
+  """Current cart for the user after a successful removal; `error` is set on failure."""
+  cart: Cart
+}
+
+type CheckoutPayload {
+  error: Error
+  """Tickets moved into the user wallet after a successful payment; `error` is set on failure."""
+  purchasedTickets: [OwnedTicket!]
+}
+
+type SaveCreditCardPayload {
+  error: Error
+  """The signed-in user after the card was saved; `error` is set on failure."""
+  user: User
+}
+
+"""Human-readable error text for a failed operation. Always null when the call succeeds."""
+type Error {
+  text: String!
+}
+
+type Mutation {
+  """
+  Log in with username and password. On success, use `accessToken` on protected mutations; the token is held in memory until logout.
+  """
+  login(username: String!, password: String!): LoginPayload!
+  """
+  End the session for this `accessToken` (removes it from server memory). Requires a valid `accessToken`.
+  """
+  logout(accessToken: String!): LogoutPayload!
+  """
+  Returns the current user for a valid `accessToken`. Includes `ticketWallet`.
+  """
+  authenticatedUser(accessToken: String!): AuthenticatedUserPayload!
+  """
+  Add one unit of a ticket to the signed-in user's cart and decrement in-memory availability for that ticket.
+  Requires a valid `accessToken`.
+  """
+  addTicketToCart(accessToken: String!, ticketId: ID!): AddToCartPayload!
+  """
+  Remove one unit of a ticket from the signed-in user's cart and give that unit back to
+  in-memory availability for that ticket. Only one unit is removed per call, even when the
+  cart holds several units of the same ticket. Requires a valid `accessToken`.
+  """
+  removeTicketFromCart(accessToken: String!, ticketId: ID!): RemoveFromCartPayload!
+  """
+  Pay with a card number, move the current cart into `ticketWallet`, and clear the cart.
+  The card is validated (length and Luhn) for a believable flow; it is not stored. Requires a valid `accessToken`.
+  """
+  checkout(accessToken: String!, creditCardNumber: String!): CheckoutPayload!
+  """
+  Save a credit card number on the signed-in user so they can skip re-entering it at
+  checkout. The card is validated (length and Luhn) and stored in memory. Subsequent
+  reads of `User.creditCardNumber` will return this value. Requires a valid `accessToken`.
+  """
+  saveCreditCard(accessToken: String!, creditCardNumber: String!): SaveCreditCardPayload!
+}

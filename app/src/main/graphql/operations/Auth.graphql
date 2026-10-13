@@ -1,0 +1,21 @@
+mutation Login($username: String!, $password: String!) {
+  login(username: $username, password: $password) {
+    accessToken
+    error { text }
+  }
+}
+
+# Note: `authenticatedUser` is a mutation in this backend, not a query.
+mutation AuthenticatedUser($accessToken: String!) {
+  authenticatedUser(accessToken: $accessToken) {
+    error { text }
+    user { id firstName lastName }
+  }
+}
+
+mutation Logout($accessToken: String!) {
+  logout(accessToken: $accessToken) {
+    ok
+    error { text }
+  }
+}
